@@ -7,14 +7,6 @@ import requests
 def scan_site(target_url, payload_level="default", payload_file=None):
     """
     Verilen hedef URL'de XSS zafiyetleri arar.
-    
-    Args:
-        target_url (str): Taranacak site URL'si.
-        payload_level (str): 'default' veya 'advanced' gibi payload seviyesi.
-        payload_file (str): Dosyadan payload okutmak istersen dosya yolu.
-        
-    Returns:
-        list: Bulunan zafiyetlerin listesi.
     """
     results = []
 
@@ -35,7 +27,7 @@ def scan_site(target_url, payload_level="default", payload_file=None):
             for payload in payloads:
                 test_url = url.replace(f"{param}={params[param][0]}", f"{param}={payload}")
                 try:
-                    resp = requests.get(test_url, timeout=10)
+                    resp = requests.get(test_url, timeout=50)
                     if payload in resp.text:
                         results.append({
                             "url": test_url,
@@ -72,14 +64,14 @@ def scan_site(target_url, payload_level="default", payload_file=None):
                 except Exception as e:
                     print(f"Error submitting form on {url}: {e}")
 
-    # Basit DOM XSS testleri (placeholder)
+    # Basit DOM XSS testleri
     for url in urls:
         parsed = urlparse(url)
         params = parse_qs(parsed.query)
         if not params:
             continue
         try:
-            resp = requests.get(url, timeout=10)
+            resp = requests.get(url, timeout=50)
             page_text = resp.text.lower()
             for param, values in params.items():
                 for payload in payloads:
@@ -93,6 +85,28 @@ def scan_site(target_url, payload_level="default", payload_file=None):
                         break
         except Exception as e:
             print(f"Error during DOM XSS check on {url}: {e}")
+
+    # Header bazlı XSS testleri
+    for url in urls:
+        for payload in payloads:
+            headers_to_test = {
+                "User-Agent": payload,
+                "Referer": payload,
+                "X-Forwarded-For": payload
+            }
+            try:
+                resp = requests.get(url, headers=headers_to_test, timeout=50)
+                for header, value in headers_to_test.items():
+                    if value in resp.text:
+                        results.append({
+                            "url": url,
+                            "param": header,
+                            "payload": value,
+                            "method": "HEADER"
+                        })
+                        break
+            except Exception as e:
+                print(f"Error testing headers on {url}: {e}")
 
     # Tekrarlayan sonuçları filtrele
     unique_results = []
