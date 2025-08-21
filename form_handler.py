@@ -42,7 +42,8 @@ class FormHandler:
         """
         data = {}
         for input_field in form_details["inputs"]:
-            if input_field["type"] == "hidden" and "csrf" in (input_field["name"] or "").lower():
+            if input_field["type"] == "hidden" and any(keyword in (input_field["name"] or "").lower() for keyword in ["csrf", "token", "authenticity_token"]):
+
                 data[input_field["name"]] = input_field["value"]
             elif input_field["type"] in ["text", "search", "url", "email", "textarea"]:
                 data[input_field["name"]] = payload
