@@ -50,9 +50,9 @@ class FormHandler:
                 data[input_field["name"]] = input_field["value"]
 
         if form_details["method"] == "post":
-            resp = requests.post(form_details["action"], data=data, timeout=10)
+            resp = requests.post(form_details["action"], data=data, timeout=50)
         else:
-            resp = requests.get(form_details["action"], params=data, timeout=10)
+            resp = requests.get(form_details["action"], params=data, timeout=50)
 
         return resp
 
